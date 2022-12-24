@@ -8,7 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.querySelector('#compose-post').onsubmit = () => {
         post_body = document.querySelector("#compose-body").value;     
-        submit_post(post_body);
+        submit_post(post_body, this.location.reload);
+        document.querySelector('#compose-body').value = '';
+        this.location.reload;
         // stop form from submitting
         return false;
         };
@@ -44,7 +46,7 @@ function showing_posts() {
 
 
 // a function for submitting a post 
-function submit_post(post_body) {
+function submit_post(post_body, myCallback) {
 
     const csrftoken =  document.querySelector("[name='csrfmiddlewaretoken']").value
     
@@ -59,5 +61,5 @@ function submit_post(post_body) {
     })
     .then(response => response.json())
     .then(information => console.log(information));
-
+    myCallback();
 };
