@@ -1,0 +1,30 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+<div id='allposts-view'>
+    <h1>All Posts</h1>
+    
+    {% if user.is_authenticated %}
+        <div id='newpost' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+            <h3>New Post</h3>
+            <div class="mb-3">
+                <form id="compose-post">
+                    {% csrf_token %}
+                    <textarea class="form-control" id="compose-body" placeholder="Body"></textarea>
+                    <input type="submit" class="btn btn-primary" value='Post'/>
+                </form>                
+            </div>
+        </div>
+    {% endif %}
+
+    <div id='previousposts' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/index.js' %}"></script>
+{% endblock %}
