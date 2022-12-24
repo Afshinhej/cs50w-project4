@@ -10,7 +10,8 @@ from .models import User, Post
 
 
 def index(request):
-    return render(request, "network/index.html")
+    content = {'users': User.objects.all()}
+    return render(request, "network/index.html", content)
 
 
 def login_view(request):
@@ -92,3 +93,8 @@ def showing_posts(request):
    
     return JsonResponse([post.serialize() for post in posts], safe=False)
 
+def profile(request, user_id):    
+    users = User.objects.all()
+    user = users.get(id=user_id)
+   
+    return JsonResponse([user.serialize()], safe=False)
