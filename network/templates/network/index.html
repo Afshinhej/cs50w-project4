@@ -2,8 +2,14 @@
 {% load static %}
 
 {% block body %}
+<div id='profile-view' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+    <ul>
+        <li>Following:</li>
+        <li>Follower:</li>
+    </ul>
+</div>
+
 <div id='allposts-view'>
-    <h1 id='page-title'></h1>
     
     {% if user.is_authenticated %}
         <div id='newpost' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
@@ -17,33 +23,25 @@
             </div>
         </div>
     {% endif %}
-
-    <div id='previousposts' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
-        
-    </div>
-
+    
 </div>
 
-
-<div id='profile-view'>
-    <h1 id='profile-title'></h1>
-    <ul>
-        <li>Following:</li>
-        <li>Follower:</li>
-    </ul>
-</div>
+<div id='previousposts' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body"></div>
 
 <div id='network-view'>
-    <h1>Network</h1>
-    <ul>
-        {% for user in users %}
-            <li>
-                <a href='#' data-userid={{ user.id }} class='users'>{{ user.username }}</a>
-            </li>
-        {% empty %}
-            No active users
-        {% endfor %}
-    </ul>
+    <div class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+        <ul>
+            {% for user in users %}    
+            {% if user != active_user %}
+                <li>
+                    <a href='#' data-userid={{ user.id }} class='users'>{{ user.username }}</a>
+                </li>
+            {% endif %}
+            {% empty %}
+                No active users
+            {% endfor %}
+        </ul>
+    </div>
 </div>
 
 {% endblock %}

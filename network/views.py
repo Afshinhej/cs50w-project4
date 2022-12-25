@@ -10,7 +10,7 @@ from .models import User, Post
 
 
 def index(request):
-    content = {'users': User.objects.all()}
+    content = {'users': User.objects.all(), 'active_user': request.user}
     return render(request, "network/index.html", content)
 
 
@@ -98,3 +98,25 @@ def profile(request, user_id):
     user = users.get(id=user_id)
    
     return JsonResponse([user.serialize()], safe=False)
+
+def profile_posts(request, user_id):
+    users = User.objects.all()
+    profile = users.get(id=user_id)
+    posts = Post.objects.all()
+    posts_from_user = posts.filter(user=profile)
+    
+    return JsonResponse([post.serialize() for post in posts_from_user], safe=False)
+
+def following(request, user_id):    
+    users = User.objects.all()
+    user = users.get(id=user_id)
+   
+    return JsonResponse([user.serialize()], safe=False)
+
+def following_posts(request, user_id):
+    users = User.objects.all()
+    profile = users.get(id=user_id)
+    posts = Post.objects.all()
+    posts_from_user = posts.filter(user=profile)
+    
+    return JsonResponse([post.serialize() for post in posts_from_user], safe=False)

@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#network-link').onclick = () => load_page('network-view');
 
     // showing previous posts 
-    showing_posts();
+    showing_posts('all');
 
     // Submitting a new post
     if (document.querySelector('#compose-post')) {
@@ -42,9 +42,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // a function for showing previous posts 
-function showing_posts() {
+function showing_posts(profileID) {
+
+    document.querySelector('#previousposts').innerHTML = '';
+    if (profileID == 'all') {
+        url = '/posts'
+    } else if (profileID != 'all') {
+        url = `/profile/${profileID}/posts`
+    }
     
-    fetch('/posts')
+    fetch(url)
     .then(response => response.json())
     .then(data => {
         data.forEach(element => {
@@ -99,6 +106,7 @@ function load_page(page) {
         
         // Show the all-posts view and hide other views
         document.querySelector('#allposts-view').style.display = 'block';
+        document.querySelector('#previousposts').style.display = 'block';
         document.querySelector('#network-view').style.display = 'none';
         document.querySelector('#profile-view').style.display = 'none';
         document.querySelector('#page-title').innerHTML = 'All Posts';  
@@ -107,6 +115,7 @@ function load_page(page) {
         
         // Show the following view and hide other views
         document.querySelector('#allposts-view').style.display = 'block';
+        document.querySelector('#previousposts').style.display = 'block';
         document.querySelector('#network-view').style.display = 'none';
         document.querySelector('#profile-view').style.display = 'none';
         document.querySelector('#page-title').innerHTML = 'Posts from Followed Users';
@@ -115,9 +124,10 @@ function load_page(page) {
 
         // Show the network view and hide other views
         document.querySelector('#allposts-view').style.display = 'none';
+        document.querySelector('#previousposts').style.display = 'none';
         document.querySelector('#network-view').style.display = 'block';
         document.querySelector('#profile-view').style.display = 'none'; 
-
+        document.querySelector('#page-title').innerHTML = 'Network';
     }
 
 };
@@ -127,12 +137,15 @@ function profileLoading(user_id) {
     document.querySelector('#allposts-view').style.display = 'none';
     document.querySelector('#network-view').style.display = 'none';
     document.querySelector('#profile-view').style.display = 'block';
+    document.querySelector('#previousposts').style.display = 'block';
 
     fetch(`/profile/${user_id}`)
     .then(response => response.json())
     .then(data => {
 
-        document.querySelector('#profile-title').innerHTML = data[0].username;
+        document.querySelector('#page-title').innerHTML = data[0].username;
 
     })
+
+    showing_posts(user_id);
 };
