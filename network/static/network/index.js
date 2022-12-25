@@ -28,16 +28,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // stop form from submitting
         return false;
         };
-
+    }
     // showing user's page
     document.querySelectorAll('.users').forEach((user) => {
         user.onclick = () => {
-
-            profileLoading(user.dataset.userid);         
-
-        }
-    })
-}
+            profileLoading(user.dataset.userid);
+        } 
+    });
 
 });
 
@@ -144,8 +141,15 @@ function profileLoading(user_id) {
     .then(data => {
 
         document.querySelector('#page-title').innerHTML = data[0].username;
-
+        
+        if (document.querySelector('#follow')) {
+            if (data[0].id == document.querySelector('#follow').dataset.activeuserid){
+                document.querySelector('#follow').style.display = 'none'
+            } else {
+                document.querySelector('#follow').style.display = 'block'
+            }
+        }
     })
-
+    
     showing_posts(user_id);
 };

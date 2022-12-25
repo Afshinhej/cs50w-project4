@@ -3,6 +3,17 @@
 
 {% block body %}
 <div id='profile-view' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+    {% if user.is_authenticated %}
+    <div id='follow' data-activeuserid={{ active_user.id }}>
+        <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+            <label class="btn btn-outline-primary" for="btnradio1">Radio 1</label>
+          
+            <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
+            <label class="btn btn-outline-primary" for="btnradio3">Radio 2</label>
+          </div>
+    </div>
+    {% endif %}
     <ul>
         <li>Following:</li>
         <li>Follower:</li>
@@ -32,11 +43,11 @@
     <div class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
         <ul>
             {% for user in users %}    
-            {% if user != active_user %}
-                <li>
-                    <a href='#' data-userid={{ user.id }} class='users'>{{ user.username }}</a>
-                </li>
-            {% endif %}
+                {% if user != active_user %}
+                    <li>
+                        <a href='#' data-userid={{ user.id }} class='users'>{{ user.username }}</a>
+                    </li>
+                {% endif %}
             {% empty %}
                 No active users
             {% endfor %}
