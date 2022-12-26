@@ -5,9 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // loading a page
     document.querySelector('#allposts-link').onclick = () => load_page('allposts-view');
+    
     if (document.querySelector('#following-link')) {
         document.querySelector('#following-link').onclick = () => load_page('following-view');
     }
+    
     if (document.querySelector('#profile-link')) {
         document.querySelector('#profile-link').onclick = () => load_page('profile-view');
     }
@@ -29,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
         };
     }
+    
     // showing user's page
     document.querySelectorAll('.users').forEach((user) => {
         user.onclick = () => {
@@ -58,16 +61,40 @@ function showing_posts(profileID) {
             const text = document.createElement('text');
             const time = document.createElement('time');
             const likes = document.createElement('text');
+            const button = document.createElement('button')
+            const button2 = document.createElement('button')
 
             head.innerHTML = element.user;
             text.innerHTML = element.body;
             time.innerHTML = element.timestamp;
             likes.innerHTML = element.likes;
+            button.innerHTML = 'Like';
+            button.classList.add('like');
+            button.dataset.post_id = element.id;
+            button2.innerHTML = 'Unlike';
+            button2.classList.add('unlike');
+            button2.dataset.post_id = element.id;
+            
+            const activeUser = document.querySelector('#allposts-view').dataset.activeuserid;
+
+            if(activeUser == element.user_id || activeUser=='None') {
+                button.style.display = 'none';
+                button2.style.display = 'none';
+            } else if (element.likers.includes(+activeUser)) {
+                button.style.display = 'none';
+                button2.style.display = 'block';
+            } else {
+                button.style.display = 'block';
+                button2.style.display = 'none';
+            }
 
             div.classList.add("border", "rounded", "border-5", "shadow-lg", "p-3", "mb-5", "bg-body")
-            div.append(head, text, hr, time, `|❤️`, likes);
+            div.append(head, text, hr, time, `| Likes❤️`, likes, button, button2);
             document.querySelector('#previousposts').append(div);
+
         });
+    liking();
+    unliking();
     });
 };
 
@@ -152,4 +179,66 @@ function profileLoading(user_id) {
     })
     
     showing_posts(user_id);
+};
+
+// liking a post
+function liking () {
+    document.querySelectorAll('.like').forEach((button) => {
+        button.onclick = () => {
+            like_post(button.dataset.post_id);
+            button.parentElement.children[4].innerHTML ++;
+            button.nextSibling.style.display = 'block'
+            button.style.display = 'none';
+        }
+    });
+}
+
+// unliking a post
+function unliking () {
+    document.querySelectorAll('.unlike').forEach((button) => {
+        button.onclick = () => {
+            unlike_post(button.dataset.post_id);
+            button.parentElement.children[4].innerHTML --;
+            button.previousSibling.style.display = 'block'
+            button.style.display = 'none';
+        }
+    });
+}
+
+// a function for posting like 
+function like_post(post_id) {
+
+    const csrftoken =  document.querySelector("[name='csrfmiddlewaretoken']").value
+    
+    const data ={
+      post_id:`${post_id}`,
+    }
+    fetch('/like', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {'X-CSRFToken': csrftoken},
+      mode: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(information => console.log(information));
+
+};
+
+// a function for posting unlike 
+function unlike_post(post_id) {
+
+    const csrftoken =  document.querySelector("[name='csrfmiddlewaretoken']").value
+    
+    const data ={
+      post_id:`${post_id}`,
+    }
+    fetch('/unlike', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {'X-CSRFToken': csrftoken},
+      mode: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(information => console.log(information));
+
 };

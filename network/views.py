@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Post
+from .models import User, Post, Like
 
 
 def index(request):
@@ -87,6 +87,47 @@ def post(request):
     return JsonResponse({"message": "Post was submitted successfully."}, status=201)
     
     
+@login_required
+def liking(request):
+
+    # Liking a post must be via POST
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    # Get contents of post
+    data = json.loads(request.body)
+    post_id = data.get("post_id", "")
+    user = request.user
+
+    # Create a new like object
+    
+    post = Post.objects.get(id=post_id)
+    like = Like(user=user, post=post)
+    like.save()
+    
+    return JsonResponse({"message": "A post was liked successfully."}, status=201)
+
+    
+@login_required
+def unliking(request):
+
+    # Unliking a post must be via POST
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    # Get contents of post
+    data = json.loads(request.body)
+    post_id = data.get("post_id", "")
+    user = request.user
+
+    # Remove a like object
+    
+    post = Post.objects.get(id=post_id)
+    like = Like.objects.get(user=user, post=post)
+    like.delete()
+    
+    return JsonResponse({"message": "A post was unliked successfully."}, status=201)
+
 def showing_posts(request):    
     posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
