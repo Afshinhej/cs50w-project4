@@ -3,10 +3,21 @@ from django.db import models
 
 
 class User(AbstractUser):
+    def follower_list(self):
+        return [follower.follower.id for follower in self.follower.all()] #user_id of the followers will be listed
+        
+    def following_list(self):
+        return [following.following.id for following in self.following.all()] #user_id of the followings will be listed 
+         
+        
     def serialize(self):
         return {
             "id": self.id,
-            "username": self.username
+            "username": self.username,
+            "follower_list": self.follower_list(),
+            "following_list":self.following_list(),
+            "follower": len(self.follower_list()),
+            "following": len(self.following_list())
         }
 
 class Post(models.Model):
@@ -48,3 +59,13 @@ class Like(models.Model):
     
     def __str__(self):
         return f'{self.user} likes {self.post.id}'
+
+class Follow(models.Model):
+    follower = models.ForeignKey("User", on_delete=models.CASCADE, related_name="following")
+    following = models.ForeignKey("User", on_delete=models.CASCADE, related_name="follower")
+    
+    class Meta:
+        unique_together = ('follower', 'following',)
+    
+    def __str__(self):
+        return f'{self.follower} follows {self.following}'

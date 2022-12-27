@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#network-link').onclick = () => load_page('network-view');
 
     // showing previous posts 
-    showing_posts('all');
+    showing_posts('all', '');
 
     // Submitting a new post
     if (document.querySelector('#compose-post')) {
@@ -42,12 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // a function for showing previous posts 
-function showing_posts(profileID) {
+function showing_posts(page, profileID) {
 
     document.querySelector('#previousposts').innerHTML = '';
-    if (profileID == 'all') {
+    if (page == 'all') {
         url = '/posts'
-    } else if (profileID != 'all') {
+    } else if(page == 'following') {
+        url = `/profile/${profileID}/posts/following`
+    } else {
         url = `/profile/${profileID}/posts`
     }
     
@@ -121,9 +123,9 @@ function submit_post(post_body, myCallback) {
 // loading page
 function load_page(page) {
     if (page === 'profile-view') {
+        user_id = document.querySelector('#profile-link').dataset.userid;
 
         // Show the all-posts view and hide other views
-        user_id = document.querySelector('#profile-link').dataset.userid;
         profileLoading(user_id);
         
     } else if (page === 'allposts-view') {
@@ -142,7 +144,9 @@ function load_page(page) {
         document.querySelector('#previousposts').style.display = 'block';
         document.querySelector('#network-view').style.display = 'none';
         document.querySelector('#profile-view').style.display = 'none';
+        document.querySelector('#newpost').style.display = 'none';
         document.querySelector('#page-title').innerHTML = 'Posts from Followed Users';
+        showing_posts('following', document.querySelector('#profile-link').dataset.userid);
 
     } else if (page === 'network-view') {
 
@@ -168,6 +172,8 @@ function profileLoading(user_id) {
     .then(data => {
 
         document.querySelector('#page-title').innerHTML = data[0].username;
+        document.querySelector('#followerCount').innerHTML = data[0].follower;
+        document.querySelector('#followingCount').innerHTML = data[0].following;
         
         if (document.querySelector('#follow')) {
             if (data[0].id == document.querySelector('#follow').dataset.activeuserid){
@@ -178,7 +184,7 @@ function profileLoading(user_id) {
         }
     })
     
-    showing_posts(user_id);
+    showing_posts('profile',user_id);
 };
 
 // liking a post

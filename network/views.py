@@ -143,21 +143,23 @@ def profile(request, user_id):
 def profile_posts(request, user_id):
     users = User.objects.all()
     profile = users.get(id=user_id)
-    posts = Post.objects.all()
+    posts = Post.objects.order_by("-timestamp").all()
     posts_from_user = posts.filter(user=profile)
     
     return JsonResponse([post.serialize() for post in posts_from_user], safe=False)
+
+def following_posts(request, user_id):
+    users = User.objects.all()
+    profile = users.get(id=user_id)
+    posts = Post.objects.order_by("-timestamp").all()
+    followings_ids = profile.following_list()
+    followings_users = [users.get(id=id) for id in followings_ids]
+    posts_from_followings = posts.filter(user__in=followings_users)
+    
+    return JsonResponse([post.serialize() for post in posts_from_followings], safe=False)
 
 def following(request, user_id):    
     users = User.objects.all()
     user = users.get(id=user_id)
    
     return JsonResponse([user.serialize()], safe=False)
-
-def following_posts(request, user_id):
-    users = User.objects.all()
-    profile = users.get(id=user_id)
-    posts = Post.objects.all()
-    posts_from_user = posts.filter(user=profile)
-    
-    return JsonResponse([post.serialize() for post in posts_from_user], safe=False)
