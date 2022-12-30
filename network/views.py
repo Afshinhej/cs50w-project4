@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Post, Like
+from .models import User, Post, Like, Follow
 
 
 def index(request):
@@ -158,8 +158,29 @@ def following_posts(request, user_id):
     
     return JsonResponse([post.serialize() for post in posts_from_followings], safe=False)
 
-def following(request, user_id):    
-    users = User.objects.all()
-    user = users.get(id=user_id)
-   
-    return JsonResponse([user.serialize()], safe=False)
+@login_required
+def follow(request):
+
+    # Following a user must be via POST
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    # Get contents of post
+    data = json.loads(request.body)
+    following_id = data.get("user_id", "")
+    action = data.get("action", "")
+    user = request.user
+
+    # Create/ delete a new/ previous Follow object
+    if action == 'follow':
+        following = User.objects.get(id=following_id)
+        follow = Follow(follower=user, following=following)
+        follow.save()
+        return JsonResponse({"message": "A user was followed successfully."}, status=201)
+    elif action == 'unfollow':
+        following = User.objects.get(id=following_id)
+        follow = Follow.objects.get(follower=user, following=following)
+        follow.delete()
+        return JsonResponse({"message": "A user was unfollowed successfully."}, status=201)
+        
+    

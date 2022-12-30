@@ -174,6 +174,14 @@ function profileLoading(user_id) {
         document.querySelector('#page-title').innerHTML = data[0].username;
         document.querySelector('#followerCount').innerHTML = data[0].follower;
         document.querySelector('#followingCount').innerHTML = data[0].following;
+
+        if (data[0].follower_list.includes(+document.querySelector('#follow').dataset.activeuserid)) {
+            document.querySelector('#unfollowButton').style.display = 'block';
+            document.querySelector('#followButton').style.display = 'none';
+        } else {
+            document.querySelector('#unfollowButton').style.display = 'none';
+            document.querySelector('#followButton').style.display = 'block';
+        }
         
         if (document.querySelector('#follow')) {
             if (data[0].id == document.querySelector('#follow').dataset.activeuserid){
@@ -182,6 +190,8 @@ function profileLoading(user_id) {
                 document.querySelector('#follow').style.display = 'block'
             }
         }
+
+        follow(user_id);
     })
     
     showing_posts('profile',user_id);
@@ -239,6 +249,46 @@ function unlike_post(post_id) {
       post_id:`${post_id}`,
     }
     fetch('/unlike', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {'X-CSRFToken': csrftoken},
+      mode: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(information => console.log(information));
+
+};
+
+// follow a user
+function follow (user_id) {
+    document.querySelector('#followButton').onclick = () => {
+        follow_post(user_id, 'follow');
+        document.querySelector('#followerCount').innerHTML ++;
+        document.querySelector('#unfollowButton').style.display = 'block';
+        document.querySelector('#followButton').style.display = 'none';
+        
+    }
+    
+    document.querySelector('#unfollowButton').onclick = () => {
+        follow_post(user_id, 'unfollow');
+        document.querySelector('#followerCount').innerHTML --;
+        document.querySelector('#unfollowButton').style.display = 'none';
+        document.querySelector('#followButton').style.display = 'block';
+}
+    
+}
+
+
+// a function for posting follow/ unfollow 
+function follow_post(user_id, action) {
+
+    const csrftoken =  document.querySelector("[name='csrfmiddlewaretoken']").value
+    
+    const data ={
+      user_id:`${user_id}`,
+      action: action
+    }
+    fetch('/follow', {
       method: 'POST',
       body: JSON.stringify(data),
       headers: {'X-CSRFToken': csrftoken},

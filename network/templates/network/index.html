@@ -5,7 +5,7 @@
 <div id='profile-view' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
     {% if user.is_authenticated %}
     <div id='follow' data-activeuserid={{ active_user.id }}>
-        <h2>div for follow/ unfollow button!</h2>
+        <button id='followButton'>Follow</button><button id='unfollowButton'>Unfollow</button>
     </div>
     {% endif %}
     <ul>
