@@ -11,6 +11,7 @@ urlpatterns = [
     
     # API Routes
     path("post", views.post, name="post"),
+    path("editpost", views.editpost, name="editpost"),
     path("like", views.liking, name="like"),
     path("unlike", views.unliking, name="unlike"),
     path("follow", views.follow, name="follow"),

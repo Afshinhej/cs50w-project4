@@ -61,42 +61,73 @@ function showing_posts(page, profileID) {
             const hr = document.createElement('hr')
             const head = document.createElement('h4');
             const text = document.createElement('text');
+            const editedText = document.createElement('textarea');
+            const saveButton =document.createElement('button');
             const time = document.createElement('time');
             const likes = document.createElement('text');
             const button = document.createElement('button')
             const button2 = document.createElement('button')
+            const editButton = document.createElement('button')
 
             head.innerHTML = element.user;
             text.innerHTML = element.body;
+            text.className = 'currentPostBody';
             time.innerHTML = element.timestamp;
             likes.innerHTML = element.likes;
+            likes.className = 'likescount';
             button.innerHTML = 'Like';
             button.classList.add('like');
             button.dataset.post_id = element.id;
             button2.innerHTML = 'Unlike';
             button2.classList.add('unlike');
             button2.dataset.post_id = element.id;
-            
+            editButton.innerHTML = 'Edit'
+            editButton.classList.add('edit');
+            editButton.dataset.post_id = element.id;
+            editedText.innerHTML = text.innerHTML;
+            editedText.className = 'editedPostBody';
+            editedText.style.display = 'none';
+            saveButton.innerHTML = 'Save';
+            saveButton.classList.add('save');
+            saveButton.dataset.post_id = element.id;
+            saveButton.style.display = 'none';
+
             const activeUser = document.querySelector('#allposts-view').dataset.activeuserid;
 
             if(activeUser == element.user_id || activeUser=='None') {
                 button.style.display = 'none';
                 button2.style.display = 'none';
+                editButton.style.display = 'block';
             } else if (element.likers.includes(+activeUser)) {
                 button.style.display = 'none';
                 button2.style.display = 'block';
+                editButton.style.display = 'none';
             } else {
                 button.style.display = 'block';
                 button2.style.display = 'none';
+                editButton.style.display = 'none';
             }
 
             div.classList.add("border", "rounded", "border-5", "shadow-lg", "p-3", "mb-5", "bg-body")
-            div.append(head, text, hr, time, `| Likes❤️`, likes, button, button2);
+            div.append(head,editButton, editedText, saveButton, text, hr, time, `| Likes❤️`, likes, button, button2);
             document.querySelector('#previousposts').append(div);
 
         });
-    liking();
-    unliking();
+        liking();
+        unliking();
+        
+        document.querySelectorAll('.edit').forEach( (button) => {
+            button.onclick = () => {
+                loadingEditingTools(button);
+            } 
+        } )
+
+        document.querySelectorAll('.save').forEach( (button) => {
+            button.onclick = () => {
+                editing(button);
+            } 
+        } )
+
     });
 };
 
@@ -202,7 +233,15 @@ function liking () {
     document.querySelectorAll('.like').forEach((button) => {
         button.onclick = () => {
             like_post(button.dataset.post_id);
-            button.parentElement.children[4].innerHTML ++;
+
+            for (var i = 0; i < button.parentElement.children.length; i++) {
+                if (button.parentElement.children[i].className == 'likescount') {
+                    button.parentElement.children[i].innerHTML ++;
+                  break;
+                }        
+            }
+
+            
             button.nextSibling.style.display = 'block'
             button.style.display = 'none';
         }
@@ -214,7 +253,14 @@ function unliking () {
     document.querySelectorAll('.unlike').forEach((button) => {
         button.onclick = () => {
             unlike_post(button.dataset.post_id);
-            button.parentElement.children[4].innerHTML --;
+            
+            for (var i = 0; i < button.parentElement.children.length; i++) {
+                if (button.parentElement.children[i].className == 'likescount') {
+                    button.parentElement.children[i].innerHTML --;
+                  break;
+                }        
+            }
+
             button.previousSibling.style.display = 'block'
             button.style.display = 'none';
         }
@@ -274,7 +320,7 @@ function follow (user_id) {
         document.querySelector('#followerCount').innerHTML --;
         document.querySelector('#unfollowButton').style.display = 'none';
         document.querySelector('#followButton').style.display = 'block';
-}
+    }
     
 }
 
@@ -296,5 +342,83 @@ function follow_post(user_id, action) {
     })
     .then(response => response.json())
     .then(information => console.log(information));
+
+};
+
+
+// function for loading tools for editing a post
+function loadingEditingTools(button) {
+
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'currentPostBody') {
+            button.parentElement.children[i].style.display = 'none';
+            break;
+        }
+    }
+    
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'editedPostBody') {
+            button.parentElement.children[i].style.display = 'block';
+            break;
+        }
+    }
+
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'save') {
+            button.parentElement.children[i].style.display = 'block';
+            break;
+        }
+    }
+}
+
+// a function for editing a post 
+function editing(button) {
+   
+    let post_body = '';
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'editedPostBody') {
+            post_body = button.parentElement.children[i].value;
+          break;
+        }
+    }
+
+    const csrftoken =  document.querySelector("[name='csrfmiddlewaretoken']").value
+    
+    const data ={
+      post_body:`${post_body}`,
+      post_id:`${button.dataset.post_id}`
+    }
+    
+    fetch('/editpost', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {'X-CSRFToken': csrftoken},
+      mode: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(information => console.log(information));
+    
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'currentPostBody') {
+            button.parentElement.children[i].style.display = 'block';
+            button.parentElement.children[i].innerHTML = post_body;
+            break;
+        }
+    }
+    
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'editedPostBody') {
+            button.parentElement.children[i].style.display = 'none';
+            break;
+        }
+    }
+
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'save') {
+            button.parentElement.children[i].style.display = 'none';
+            break;
+        }
+    }
+
 
 };

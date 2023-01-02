@@ -86,6 +86,27 @@ def post(request):
     
     return JsonResponse({"message": "Post was submitted successfully."}, status=201)
     
+@login_required
+def editpost(request):
+
+    # Editing a post must be via POST
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    
+    # Get contents of post
+    data = json.loads(request.body)
+    body = data.get("post_body", "")
+    post_id = data.get("post_id", "")
+
+    # Edit a post
+    
+    post = Post.objects.get(id=post_id)
+    post.body = body
+    post.save()
+    
+    return JsonResponse({"message": "Post was edited successfully."}, status=201)
+    
     
 @login_required
 def liking(request):
