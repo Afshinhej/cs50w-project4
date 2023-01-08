@@ -222,13 +222,8 @@ def index(request):
 def showing_posts(request):    
     posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
-
-    paginator = Paginator(posts, 10) # Show 10 posts per page.
-
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
        
-    return JsonResponse([post.serialize() for post in page_obj], safe=False)
+    return JsonResponse([post.serialize() for post in posts], safe=False)
 
 def profile(request, user_id):    
     users = User.objects.all()
@@ -242,11 +237,7 @@ def profile_posts(request, user_id):
     posts = Post.objects.order_by("-timestamp").all()
     posts_from_user = posts.filter(user=profile)
     
-    paginator = Paginator(posts_from_user, 10) # Show 10 posts
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    return JsonResponse([post.serialize() for post in page_obj], safe=False)
+    return JsonResponse([post.serialize() for post in posts_from_user], safe=False)
 
 def following_posts(request, user_id):
     users = User.objects.all()
@@ -256,11 +247,7 @@ def following_posts(request, user_id):
     followings_users = [users.get(id=id) for id in followings_ids]
     posts_from_followings = posts.filter(user__in=followings_users)
     
-    paginator = Paginator(posts_from_followings, 10) # Show 10 posts per page.
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    return JsonResponse([post.serialize() for post in page_obj], safe=False)
+    return JsonResponse([post.serialize() for post in posts_from_followings], safe=False)
 
 @login_required
 def follow(request):
