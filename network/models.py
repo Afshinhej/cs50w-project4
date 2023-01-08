@@ -32,7 +32,7 @@ class Post(models.Model):
     
     def liker(self):
         likes = Like.objects.filter(post=self)
-        likers = likes.user
+        likers = [like.user.id for like in likes]
         return likers
         
     def serialize(self):

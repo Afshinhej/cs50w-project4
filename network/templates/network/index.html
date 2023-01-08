@@ -2,52 +2,111 @@
 {% load static %}
 
 {% block body %}
-<div id='profile-view' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
-    {% if user.is_authenticated %}
-    <div id='follow' data-activeuserid={{ active_user.id }}>
-        <button id='followButton'>Follow</button><button id='unfollowButton'>Unfollow</button>
-    </div>
-    {% endif %}
-    <ul>
-        <li>Following: <text id='followingCount'></text></li>
-        <li>Follower: <text id='followerCount'></text></li>
-    </ul>
-</div>
-
-<div id='allposts-view' data-activeuserid={{ active_user.id }}>
-    
-    {% if user.is_authenticated %}
-        <div id='newpost' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
-            <h3>New Post</h3>
-            <div class="mb-3">
-                <form id="compose-post">
-                    {% csrf_token %}
-                    <textarea class="form-control" id="compose-body" placeholder="Body"></textarea>
-                    <input type="submit" class="btn btn-primary" value='Post'/>
-                </form>                
-            </div>
-        </div>
-    {% endif %}
-    
-</div>
-
-<div id='previousposts' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body"></div>
-
-<div id='network-view'>
-    <div class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
-        <ul>
-            {% for user in users %}    
-                {% if user != active_user %}
-                    <li>
-                        <a href='#' data-userid={{ user.id }} class='users'>{{ user.username }}</a>
-                    </li>
+<h1>{{ header1|title }}</h1>
+{% if profile_view %}
+    <div id='profile-view' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+        {% if user.is_authenticated and not profile|add:'0'  == request.user.id %}
+            <div id='follow' data-activeuserid={{ request.user.id }}>
+                {% if profile|add:'0' in request.user.following_list %}
+                    <button id='followButton' data-user_id={{ profile }} data-activeuserid={{ request.user.id }} style="display: none;">Follow</button>
+                    <button id='unfollowButton' data-user_id={{ profile }} data-activeuserid={{ request.user.id }} style="display: block;">Unfollow</button>
+                {% else %}
+                    <button id='followButton' data-user_id={{ profile }} data-activeuserid={{ request.user.id }} style="display: block;">Follow</button>
+                    <button id='unfollowButton' data-user_id={{ profile }} data-activeuserid={{ request.user.id }} style="display: none;">Unfollow</button>
                 {% endif %}
-            {% empty %}
-                No active users
-            {% endfor %}
+            </div>
+        {% endif %}
+        <ul>
+            <li>Following: <text id='followingCount'>{{ user_profile.following.count }}</text></li>
+            <li>Follower: <text id='followerCount'>{{ user_profile.follower.count }}</text></li>
         </ul>
     </div>
-</div>
+{% endif %}
+
+{% if newPost_view %}
+    {% if user.is_authenticated %}
+            <div id='newpost' class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+                <h3>New Post</h3>
+                <div class="mb-3">
+                    <form id="compose-post">
+                        <textarea class="form-control" id="compose-body" placeholder="Body"></textarea>
+                        <input type="submit" class="btn btn-primary" value='Post'/>
+                    </form>                
+                </div>
+            </div>
+    {% endif %}
+{% endif %}
+
+{% if posts_view %}
+
+    <div id='allposts-view' data-activeuserid={{ request.user.id }}>
+
+        {% for post in page_obj %}
+            {# Each "post" is a Post model object. #}
+
+            <div data-activeuserid={{ request.user.id }} data-user_id={{ post.user.id }} data-post_id={{ post.id }} class="post border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+                <h4><a href='?profile={{ post.user.id }}'>{{ post.user }}</a></h4>
+                <button class="edit" data-post_id={{ post.id }} style="display: block;">Edit</button>
+                <textarea class="editedPostBody" style="display: block;">{{ post.body }}</textarea>
+                <button class="save" data-post_id={{ post.id }} style="display: block;">Save</button>
+                {% csrf_token %}
+                <text class="currentPostBody">{{ post.body }}</text>
+                <hr>
+                <time>{{ post.timestamp }}</time>
+                | Likes❤️
+                <text class="likescount">{{ post.countlikes }}</text>
+                {% if request.user.id == post.user.id or not user.is_authenticated %}
+                    <button class="like" data-post_id={{ post.id }} style="display: none;">Like</button>
+                    <button class="unlike" data-post_id={{ post.id }} style="display: none;">Unlike</button>
+                {% elif request.user.id in post.liker %}
+                    <button class="like" data-post_id={{ post.id }} style="display: none;">Like</button>
+                    <button class="unlike" data-post_id={{ post.id }} style="display: block;">Unlike</button>
+                {% else%}
+                    <button class="like" data-post_id={{ post.id }} style="display: block;">Like</button>
+                    <button class="unlike" data-post_id={{ post.id }} style="display: none;">Unlike</button>
+                {% endif %}
+            </div>
+        {% empty %}
+        There are no posts available!
+        {% endfor %}
+    </div>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?profile={{ profile }}&page=1">&laquo; first</a>
+                <a href="?profile={{ profile }}&page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?profile={{ profile }}&page={{ page_obj.next_page_number }}">next</a>
+                <a href="?profile={{ profile }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+{% endif %}
+
+{% if network_view %}
+    <div id='network-view'>
+        <div class="border rounded border-5 shadow-lg p-3 mb-5 bg-body">
+            <ul>
+                {% for user in users %}    
+                    {% if user != request.user %}
+                        <li>
+                            <a href="?profile={{ user.id }}" data-userid={{ user.id }} class='users'>{{ user.username }}</a>
+                        </li>
+                    {% endif %}
+                {% empty %}
+                    No active users
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endif %}
 
 {% endblock %}
 

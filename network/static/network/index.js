@@ -1,23 +1,31 @@
 document.addEventListener('DOMContentLoaded', function() {
-
-    // defualt view
-    load_page('allposts-view')
-
-    // loading a page
-    document.querySelector('#allposts-link').onclick = () => load_page('allposts-view');
     
-    if (document.querySelector('#following-link')) {
-        document.querySelector('#following-link').onclick = () => load_page('following-view');
-    }
-    
-    if (document.querySelector('#profile-link')) {
-        document.querySelector('#profile-link').onclick = () => load_page('profile-view');
-    }
-    
-    document.querySelector('#network-link').onclick = () => load_page('network-view');
+    document.querySelectorAll('.editedPostBody').forEach((element) => element.style.display='none');
+    document.querySelectorAll('.save').forEach((element) => element.style.display='none');
+    document.querySelectorAll('.edit').forEach((element) => element.style.display='none');    
+    document.querySelectorAll('.post').forEach((div) => {
+        if (div.dataset.user_id === div.dataset.activeuserid) {
+            for (var i = 0; i < div.children.length; i++) {
+                if (div.children[i].className == 'edit') {
+                    div.children[i].style.display = 'block';
+                  break;
+                }        
+            }
+        }
+    });    
 
-    // showing previous posts 
-    showing_posts('all', '');
+    document.querySelectorAll('.edit').forEach((button) => {
+        button.onclick = () => loadingEditingTools(button);
+    })
+
+    document.querySelectorAll('.save').forEach((button) => {
+        button.onclick = () => editing(button);
+    })
+      
+    liking();
+    unliking();
+    if (document.querySelector('#follow')) {follow()}
+    
 
     // Submitting a new post
     if (document.querySelector('#compose-post')) {
@@ -31,105 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
         };
     }
-    
-    // showing user's page
-    document.querySelectorAll('.users').forEach((user) => {
-        user.onclick = () => {
-            profileLoading(user.dataset.userid);
-        } 
-    });
-
 });
-
-// a function for showing previous posts 
-function showing_posts(page, profileID) {
-
-    document.querySelector('#previousposts').innerHTML = '';
-    if (page == 'all') {
-        url = '/posts'
-    } else if(page == 'following') {
-        url = `/profile/${profileID}/posts/following`
-    } else {
-        url = `/profile/${profileID}/posts`
-    }
-    
-    fetch(url)
-    .then(response => response.json())
-    .then(data => {
-        data.forEach(element => {
-            const div = document.createElement('div');
-            const hr = document.createElement('hr')
-            const head = document.createElement('h4');
-            const text = document.createElement('text');
-            const editedText = document.createElement('textarea');
-            const saveButton =document.createElement('button');
-            const time = document.createElement('time');
-            const likes = document.createElement('text');
-            const button = document.createElement('button')
-            const button2 = document.createElement('button')
-            const editButton = document.createElement('button')
-
-            head.innerHTML = element.user;
-            text.innerHTML = element.body;
-            text.className = 'currentPostBody';
-            time.innerHTML = element.timestamp;
-            likes.innerHTML = element.likes;
-            likes.className = 'likescount';
-            button.innerHTML = 'Like';
-            button.classList.add('like');
-            button.dataset.post_id = element.id;
-            button2.innerHTML = 'Unlike';
-            button2.classList.add('unlike');
-            button2.dataset.post_id = element.id;
-            editButton.innerHTML = 'Edit'
-            editButton.classList.add('edit');
-            editButton.dataset.post_id = element.id;
-            editedText.innerHTML = text.innerHTML;
-            editedText.className = 'editedPostBody';
-            editedText.style.display = 'none';
-            saveButton.innerHTML = 'Save';
-            saveButton.classList.add('save');
-            saveButton.dataset.post_id = element.id;
-            saveButton.style.display = 'none';
-
-            const activeUser = document.querySelector('#allposts-view').dataset.activeuserid;
-
-            if(activeUser == element.user_id || activeUser=='None') {
-                button.style.display = 'none';
-                button2.style.display = 'none';
-                editButton.style.display = 'block';
-            } else if (element.likers.includes(+activeUser)) {
-                button.style.display = 'none';
-                button2.style.display = 'block';
-                editButton.style.display = 'none';
-            } else {
-                button.style.display = 'block';
-                button2.style.display = 'none';
-                editButton.style.display = 'none';
-            }
-
-            div.classList.add("border", "rounded", "border-5", "shadow-lg", "p-3", "mb-5", "bg-body")
-            div.append(head,editButton, editedText, saveButton, text, hr, time, `| Likes❤️`, likes, button, button2);
-            document.querySelector('#previousposts').append(div);
-
-        });
-        liking();
-        unliking();
-        
-        document.querySelectorAll('.edit').forEach( (button) => {
-            button.onclick = () => {
-                loadingEditingTools(button);
-            } 
-        } )
-
-        document.querySelectorAll('.save').forEach( (button) => {
-            button.onclick = () => {
-                editing(button);
-            } 
-        } )
-
-    });
-};
 
 
 // a function for submitting a post 
@@ -151,82 +61,6 @@ function submit_post(post_body, myCallback) {
     myCallback();
 };
 
-// loading page
-function load_page(page) {
-    if (page === 'profile-view') {
-        user_id = document.querySelector('#profile-link').dataset.userid;
-
-        // Show the all-posts view and hide other views
-        profileLoading(user_id);
-        
-    } else if (page === 'allposts-view') {
-        
-        // Show the all-posts view and hide other views
-        document.querySelector('#allposts-view').style.display = 'block';
-        document.querySelector('#previousposts').style.display = 'block';
-        document.querySelector('#network-view').style.display = 'none';
-        document.querySelector('#profile-view').style.display = 'none';
-        document.querySelector('#page-title').innerHTML = 'All Posts';  
-        
-    } else if (page === 'following-view') {
-        
-        // Show the following view and hide other views
-        document.querySelector('#allposts-view').style.display = 'block';
-        document.querySelector('#previousposts').style.display = 'block';
-        document.querySelector('#network-view').style.display = 'none';
-        document.querySelector('#profile-view').style.display = 'none';
-        document.querySelector('#newpost').style.display = 'none';
-        document.querySelector('#page-title').innerHTML = 'Posts from Followed Users';
-        showing_posts('following', document.querySelector('#profile-link').dataset.userid);
-
-    } else if (page === 'network-view') {
-
-        // Show the network view and hide other views
-        document.querySelector('#allposts-view').style.display = 'none';
-        document.querySelector('#previousposts').style.display = 'none';
-        document.querySelector('#network-view').style.display = 'block';
-        document.querySelector('#profile-view').style.display = 'none'; 
-        document.querySelector('#page-title').innerHTML = 'Network';
-    }
-
-};
-
-// loading profile page
-function profileLoading(user_id) {
-    document.querySelector('#allposts-view').style.display = 'none';
-    document.querySelector('#network-view').style.display = 'none';
-    document.querySelector('#profile-view').style.display = 'block';
-    document.querySelector('#previousposts').style.display = 'block';
-
-    fetch(`/profile/${user_id}`)
-    .then(response => response.json())
-    .then(data => {
-
-        document.querySelector('#page-title').innerHTML = data[0].username;
-        document.querySelector('#followerCount').innerHTML = data[0].follower;
-        document.querySelector('#followingCount').innerHTML = data[0].following;
-
-        if (data[0].follower_list.includes(+document.querySelector('#follow').dataset.activeuserid)) {
-            document.querySelector('#unfollowButton').style.display = 'block';
-            document.querySelector('#followButton').style.display = 'none';
-        } else {
-            document.querySelector('#unfollowButton').style.display = 'none';
-            document.querySelector('#followButton').style.display = 'block';
-        }
-        
-        if (document.querySelector('#follow')) {
-            if (data[0].id == document.querySelector('#follow').dataset.activeuserid){
-                document.querySelector('#follow').style.display = 'none'
-            } else {
-                document.querySelector('#follow').style.display = 'block'
-            }
-        }
-
-        follow(user_id);
-    })
-    
-    showing_posts('profile',user_id);
-};
 
 // liking a post
 function liking () {
@@ -237,13 +71,16 @@ function liking () {
             for (var i = 0; i < button.parentElement.children.length; i++) {
                 if (button.parentElement.children[i].className == 'likescount') {
                     button.parentElement.children[i].innerHTML ++;
-                  break;
+                }
+                if (button.parentElement.children[i].className == 'like') {
+                    button.parentElement.children[i].style.display = 'none';
+                }        
+                if (button.parentElement.children[i].className == 'unlike') {
+                    button.parentElement.children[i].style.display = 'block';
                 }        
             }
 
             
-            button.nextSibling.style.display = 'block'
-            button.style.display = 'none';
         }
     });
 }
@@ -257,12 +94,15 @@ function unliking () {
             for (var i = 0; i < button.parentElement.children.length; i++) {
                 if (button.parentElement.children[i].className == 'likescount') {
                     button.parentElement.children[i].innerHTML --;
-                  break;
                 }        
+                if (button.parentElement.children[i].className == 'like') {
+                    button.parentElement.children[i].style.display = 'block';
+                }        
+                if (button.parentElement.children[i].className == 'unlike') {
+                    button.parentElement.children[i].style.display = 'none';
+            
+                }
             }
-
-            button.previousSibling.style.display = 'block'
-            button.style.display = 'none';
         }
     });
 }
@@ -302,13 +142,12 @@ function unlike_post(post_id) {
     })
     .then(response => response.json())
     .then(information => console.log(information));
-
 };
 
 // follow a user
-function follow (user_id) {
+function follow() {
     document.querySelector('#followButton').onclick = () => {
-        follow_post(user_id, 'follow');
+        follow_post(document.querySelector('#unfollowButton').dataset.user_id, 'follow');
         document.querySelector('#followerCount').innerHTML ++;
         document.querySelector('#unfollowButton').style.display = 'block';
         document.querySelector('#followButton').style.display = 'none';
@@ -316,14 +155,12 @@ function follow (user_id) {
     }
     
     document.querySelector('#unfollowButton').onclick = () => {
-        follow_post(user_id, 'unfollow');
+        follow_post(document.querySelector('#unfollowButton').dataset.user_id, 'unfollow');
         document.querySelector('#followerCount').innerHTML --;
         document.querySelector('#unfollowButton').style.display = 'none';
         document.querySelector('#followButton').style.display = 'block';
-    }
-    
+    }    
 }
-
 
 // a function for posting follow/ unfollow 
 function follow_post(user_id, action) {
@@ -342,13 +179,13 @@ function follow_post(user_id, action) {
     })
     .then(response => response.json())
     .then(information => console.log(information));
-
 };
 
 
 // function for loading tools for editing a post
 function loadingEditingTools(button) {
 
+    button.style.display = 'none';
     for (var i = 0; i < button.parentElement.children.length; i++) {
         if (button.parentElement.children[i].className == 'currentPostBody') {
             button.parentElement.children[i].style.display = 'none';
@@ -374,6 +211,13 @@ function loadingEditingTools(button) {
 // a function for editing a post 
 function editing(button) {
    
+    for (var i = 0; i < button.parentElement.children.length; i++) {
+        if (button.parentElement.children[i].className == 'edit') {
+            button.parentElement.children[i].style.display = 'block';
+            break;
+        }
+    }
+
     let post_body = '';
     for (var i = 0; i < button.parentElement.children.length; i++) {
         if (button.parentElement.children[i].className == 'editedPostBody') {
@@ -419,6 +263,4 @@ function editing(button) {
             break;
         }
     }
-
-
 };

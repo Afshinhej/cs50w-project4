@@ -5,13 +5,9 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator
 
 from .models import User, Post, Like, Follow
-
-
-def index(request):
-    content = {'users': User.objects.all(), 'active_user': request.user}
-    return render(request, "network/index.html", content)
 
 
 def login_view(request):
@@ -149,11 +145,90 @@ def unliking(request):
     
     return JsonResponse({"message": "A post was unliked successfully."}, status=201)
 
+def index(request):
+    posts = Post.objects.all()
+    posts = posts.order_by("-timestamp").all()
+    users = User.objects.all()
+    users_ids = [user.id for user in users]
+    page_number = request.GET.get('page')
+    profile = request.GET.get('profile')
+    profile_view = False
+    network_view = False
+    newPost_view = False
+    posts_view = False
+    user_profile = None
+    
+    try:
+        int(profile)
+        if int(profile) in users_ids:
+            user_profile = users.get(id=int(profile))
+            posts = posts.filter(user=user_profile)
+            header1 = f"{user_profile}'s profile"
+            profile_view = True
+            if user_profile == request.user:
+                newPost_view = True
+            posts_view = True
+        else:
+            header1 = 'all posts'
+            newPost_view = True
+            posts_view = True
+    except:
+        if profile == 'myprofile':
+            posts = posts.filter(user=request.user)
+            header1 = f"{request.user}'s profile"
+            profile = request.user.id
+            user_profile = request.user
+            profile_view = True
+            newPost_view = True
+            posts_view = True
+        elif profile == 'following':
+            try:
+                followings_ids = request.user.following_list()
+                followings_users = [User.objects.get(id=id) for id in followings_ids]
+                posts = posts.filter(user__in=followings_users)
+            except:
+                posts=[]
+            header1 = 'following'
+            posts_view = True
+        elif profile == 'network':
+            header1 = 'Network'
+            network_view = True
+            
+        else:
+            header1 = 'all posts'
+            newPost_view = True
+            posts_view = True
+
+    paginator = Paginator(posts, 10) # Show 10 posts per page.
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj':page_obj,
+        'header1':header1,
+        'profile':profile,
+        'users':users,
+        'profile_view':profile_view,
+        'user_profile':user_profile,
+        'network_view':network_view,
+        'newPost_view': newPost_view,
+        'posts_view': posts_view
+    }
+    
+    return render(request, "network/index.html", context)
+    
+
+
+
 def showing_posts(request):    
     posts = Post.objects.all()
     posts = posts.order_by("-timestamp").all()
-   
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+
+    paginator = Paginator(posts, 10) # Show 10 posts per page.
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+       
+    return JsonResponse([post.serialize() for post in page_obj], safe=False)
 
 def profile(request, user_id):    
     users = User.objects.all()
@@ -167,7 +242,11 @@ def profile_posts(request, user_id):
     posts = Post.objects.order_by("-timestamp").all()
     posts_from_user = posts.filter(user=profile)
     
-    return JsonResponse([post.serialize() for post in posts_from_user], safe=False)
+    paginator = Paginator(posts_from_user, 10) # Show 10 posts
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return JsonResponse([post.serialize() for post in page_obj], safe=False)
 
 def following_posts(request, user_id):
     users = User.objects.all()
@@ -177,7 +256,11 @@ def following_posts(request, user_id):
     followings_users = [users.get(id=id) for id in followings_ids]
     posts_from_followings = posts.filter(user__in=followings_users)
     
-    return JsonResponse([post.serialize() for post in posts_from_followings], safe=False)
+    paginator = Paginator(posts_from_followings, 10) # Show 10 posts per page.
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return JsonResponse([post.serialize() for post in page_obj], safe=False)
 
 @login_required
 def follow(request):
